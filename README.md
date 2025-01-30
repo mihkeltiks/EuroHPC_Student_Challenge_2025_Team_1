@@ -57,7 +57,7 @@ Each team is required to use one of the following repositories for code developi
 
 
 ### Q&A:
-For any further questions please contact janez.povh@rudolfov.eu or roman.kuzel@rudolfovo.eu.
+For any further questions please contact janez.povh@rudolfovo.eu or roman.kuzel@rudolfovo.eu.
 
 ### References
 
