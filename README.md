@@ -15,7 +15,7 @@ A parallel implementation of the Branch and bound method is expected for solving
 The optimal solution or best computed coloring needs to be delivered within the time limit of 10.000s regardless of computational resources used (CPUs, cores). This time limit needs to be implemented in the algorithm/code and should be allowed to be set by users as a parameter of a solver.
 
 ### Instances
-The problem instances are in `/instances` and `/instances_optional` folders. The instances are benchmark vertex coloring instances from https://mat.tepper.cmu.edu/COLOR/instances. The webpage provides chromatic numbers for problem instances if known.  html in the DIMACS ASCII input fromat. 
+The problem instances are in `/instances` and `/instances_optional` folders. The instances are benchmark vertex coloring instances from https://mat.tepper.cmu.edu/COLOR/instances.html in the DIMACS ASCII input fromat. The webpage provides chromatic numbers for problem instances if known.   
 Results (optimal coloring or best computed) should be delivered for all instances from the `/instances` folder.
 
 ### Output format
