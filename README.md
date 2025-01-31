@@ -42,7 +42,7 @@ number_of_colors: 10
 .
 19 5
 ```
-The `wall_time_sec` should represent the total running time of the solver including input/output data processingm worker scheduling and communication. We recommend to measure this value on the master process right after `MPI_Init()` and before `MPI_Finalize()` if MPI is used. Note, that `is_optimal` should not be set to `true` if the solver deasn't complete the computation within the requested time limit. The computed coloring should be provided as a two column `vertex color` map be right bellow the `number_of_colors` parmeter.
+The `wall_time_sec` should represent the total running time of the solver including input/output data processingm worker scheduling and communication. We recommend to measure this value on the master process right after `MPI_Init()` and before `MPI_Finalize()` if MPI is used. Note, that `is_optimal` should not be set to `true` if the solver deasn't complete the computation within the requested time limit. The computed coloring should be provided as a two column `vertex color` map right bellow the `number_of_colors` parmeter.
 
 ### Repositories
 
