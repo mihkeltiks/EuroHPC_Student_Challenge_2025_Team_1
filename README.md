@@ -25,7 +25,7 @@ For the problem instance `problem_instance_xyz` an output file `problem_instance
     
 ```
 problem_instance_file_name: problem_instance_xyz
-cmd_line: ./mpirun -n 5 solver instance ....
+cmd_line: mpirun -n 5 solver instance ....
 solver_version: v1.0.1
 number_of_vertices: 20
 number_of_edges: 40
