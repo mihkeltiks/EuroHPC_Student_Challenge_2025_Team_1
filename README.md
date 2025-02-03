@@ -25,13 +25,14 @@ For the problem instance `problem_instance_xyz` an output file `problem_instance
     
 ```
 problem_instance_file_name: problem_instance_xyz
+cmd_line: solver instance ....
+solver_version: v1.0.1
 number_of_vertices: 20
 number_of_edges: 40
 time_limit_sec: 10000
 number_of_worker_processes: 5
 number_of_cores_per_worker: 6
 wall_time_sec: 2456
-is_optimal: true
 is_within_time_limit: true
 number_of_colors: 10
 0 1
@@ -42,7 +43,7 @@ number_of_colors: 10
 .
 19 5
 ```
-The `wall_time_sec` should represent the total running time of the solver including input/output data processingm worker scheduling and communication. We recommend to measure this value on the master process right after `MPI_Init()` and before `MPI_Finalize()` if MPI is used. Note, that `is_optimal` should not be set to `true` if the solver deasn't complete the computation within the requested time limit. The computed coloring should be provided as a two column `vertex color` map right bellow the `number_of_colors` parmeter.
+The `wall_time_sec` should represent the total running time of the solver including input/output data processingm worker scheduling and communication. We recommend to measure this value on the master process right after `MPI_Init()` and before `MPI_Finalize()` if MPI is used. The computed coloring should be provided as a two column `vertex color` map right bellow the `number_of_colors` parmeter.
 
 ### Repositories
 
