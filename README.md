@@ -47,7 +47,7 @@ The `wall_time_sec` should represent the total running time of the solver includ
 
 ### Repositories
 
-Each team is required to use one of the following repositories for code developing and releesing the final release. The final version needs to be tagged as vM.m.p (using Major.minor.patch convention). 
+Each team is required to use one of the following repositories for code developing and releasing the final release. The final version needs to be tagged as vM.m.p (using Major.minor.patch convention). 
 
 - https://github.com/Rudolfovoorg/EuroHPC_Student_Challenge_2025_Team_1
 - https://github.com/Rudolfovoorg/EuroHPC_Student_Challenge_2025_Team_2
