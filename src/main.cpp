@@ -136,7 +136,7 @@ int main(int argc, char** argv) {
                 if (invertInputGraph) {
                     inputGraph.invertEdges();
                     std::cout << "Inverted graph: " << inputGraph.getNumVertices() << " vertices " << inputGraph.getNumEdges() << " edges " 
-                    << inputGraph.getNumEdges()*2.0/(inputGraph.getNumVertices()*(inputGraph.getNumVertices()-1)) << " density " << std::endl;
+                    << getDensity(inputGraph.getNumVertices(), inputGraph.getNumEdges()) << " density " << std::endl;
                 }
 
                 inputGraph.debugOut();
@@ -144,6 +144,12 @@ int main(int argc, char** argv) {
                 VertexColoring<NodeSet> coloring(inputGraph);
                 int numColors = coloring.colorGraph();
                 std::cout << "Minimum number of colors: " << numColors << std::endl;
+                std::cout << std::endl;
+
+                // maximum clique approximation
+                NodeSet maxClique = inputGraph.findMaxCliqueApprox();
+                std::cout << "approx Max clique set: " << maxClique << std::endl;
+                std::cout << "approx Max clique size : " << maxClique.size() << std::endl;
 
             } catch (std::exception& e) {
                 std::cout << "Terminated due to exception: ";

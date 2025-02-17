@@ -1,4 +1,4 @@
 #!/bin/bash
 make clean
 make -j
-./chromatic -input ../instances/myciel3.col
+./chromatic -input ../instances/queen5_5.col

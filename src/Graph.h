@@ -214,6 +214,61 @@ public:
             }
         }
     }
+
+    /**
+     * @brief Find an approximation of the maximum clique using a greedy approach
+     * @return VectorT containing the vertices that form an approximate maximum clique
+     */
+    VectorT findMaxCliqueApprox() {
+        // compute degrees
+        calculateNodeDegrees();
+        
+        size_t n = getNumVertices();
+        
+        // Create vertex-degree pairs for sorting (may be parallelizable)
+        std::vector<std::pair<VertexId, int>> vertexDegrees;
+        vertexDegrees.reserve(n);
+        for (VertexId i = 0; i < n; ++i) {
+            vertexDegrees.push_back({i, degrees[i]});
+        }
+        
+        // Sort vertices by degree in descending order
+        std::sort(vertexDegrees.begin(), vertexDegrees.end(),
+            [](const std::pair<VertexId, int>& a, const std::pair<VertexId, int>& b) { 
+                return a.second > b.second; 
+            });
+
+        // Initialize result vector with highest degree vertex
+        VectorT clique;
+        clique.add(vertexDegrees[0].first);
+        
+        // Batch processing of candidates (parallelizable)
+        const size_t batchSize = 128;
+        for (size_t i = 1; i < n; i += batchSize) {
+            size_t endIdx = std::min(i + batchSize, n);
+            
+            // Process a batch of candidates
+            for (size_t j = i; j < endIdx; ++j) {
+                VertexId candidate = vertexDegrees[j].first;
+                bool canAdd = true;
+                
+                // Check if candidate forms clique with all current members
+                size_t cliqueSize = clique.size();
+                for (size_t k = 0; k < cliqueSize; ++k) {
+                    if (!areNeighbours(candidate, clique[k])) {
+                        canAdd = false;
+                        break;
+                    }
+                }
+                
+                if (canAdd) {
+                    clique.add(candidate);
+                }
+            }
+        }
+
+        return clique;
+    }
     
     /**
      * @brief Perform intersection between a node #p's neighbours and a set of vertices #vertices, store the result in set of vertices #result
