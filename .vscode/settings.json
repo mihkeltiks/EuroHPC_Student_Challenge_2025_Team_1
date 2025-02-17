@@ -1,5 +1,6 @@
 {
     "files.associations": {
+<<<<<<< Updated upstream
         "ostream": "cpp",
         "array": "cpp",
         "atomic": "cpp",
@@ -48,5 +49,10 @@
         "stdexcept": "cpp",
         "streambuf": "cpp",
         "typeinfo": "cpp"
+=======
+        "times.h": "c",
+        "stdlib.h": "c",
+        "types.h": "c"
+>>>>>>> Stashed changes
     }
 }

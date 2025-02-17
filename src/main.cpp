@@ -64,42 +64,12 @@ int main(int argc, char** argv) {
 
         std::cout << "warning: this algorithm does not use bitboards\n";
         
-        parameterSet.addDefinition("-timeout", "Timeout in seconds; bound the maximum execution time of the algorithm.")
-            .setNumberOfValues(1)
-            .bindToVariable(timeout)
-            .setDefaultValue(1000);
+
         parameterSet.addDefinition("-input", "Provides a graph input to the algorithm, in a form of a file (path is provided); supported file formatas are dimacs text, SIP, Arg, and .dat.")
             .setNumberOfValues(1)
             .bindToVariable(inputString)
             .addOnChangeHandler([&inputGraphParameters](const std::string& val)->std::string {inputGraphParameters.push_back(val); return "";});
-        parameterSet.addDefinition("-threads", "Defines the number of threads to execute on.")
-            .setDefaultValue("0")     // 0 = sequential algorithm
-            .setNumberOfValues(1)
-            .bindToVariable(numThreads);
-        parameterSet.addDefinition("-jobs", "Defines the number of threads to execute on.")
-            .setDefaultValue("1")     // 0 = sequential algorithm
-            .setNumberOfValues(1)
-            .bindToVariable(numJobs);
-        parameterSet.addDefinition("-bind", "Defines how the threads should be bound to cores: takes a list of core indices, separated by commas.")
-            .setNumberOfValues(1)
-            .bindToVariable(inputString)
-            .addOnChangeHandler([&bindProcessors](const std::string& val)->std::string {
-                std::string singleIndex;
-                std::stringstream valStream(val);
-                while(getline(valStream, singleIndex, ',')) 
-                    bindProcessors.push_back(std::stoi(singleIndex));
-                return "";}
-            );
-        parameterSet.addDefinition("-invertInput", "Inverts the graph before starting the search; effectively this changes max cliuqe to max independent set algorithm.")
-            .setNumberOfValues(0)
-            .bindToVariable(invertInputGraph);
-        parameterSet.addDefinition("-help", "Show the help screen.")
-            .setDefaultValue("false")
-            .bindToVariable(printHelp);
-        parameterSet.addDefinition("--help", "Show the help screen.")
-            .makeHelpInvisible()
-            .setDefaultValue("false")
-            .bindToVariable(printHelp);
+
         
         // TODO add all missing definitions
                 
@@ -128,7 +98,6 @@ int main(int argc, char** argv) {
                 const char* testCliqueFile = (inputGraphParameters[0].c_str() == nullptr ? "12345.clq" : inputGraphParameters[0].c_str());
                 
                 inputGraph = loadGraph<NodeSet>(testCliqueFile);
-                inputGraph.debugOut();
                 bool graphLoaded = inputGraph.getNumEdges() > 0;
                 if (!graphLoaded) {
                     throw std::runtime_error("Unable to load graph");
@@ -138,19 +107,11 @@ int main(int argc, char** argv) {
                     std::cout << "Inverted graph: " << inputGraph.getNumVertices() << " vertices " << inputGraph.getNumEdges() << " edges " 
                     << getDensity(inputGraph.getNumVertices(), inputGraph.getNumEdges()) << " density " << std::endl;
                 }
-
-                inputGraph.debugOut();
-
                 VertexColoring<NodeSet> coloring(inputGraph);
-                int numColors = coloring.colorGraph();
+                int numColors = coloring.findChromaticNumber();
+                bool check = coloring.isProperlyColored(coloring.bestColoring);
                 std::cout << "Minimum number of colors: " << numColors << std::endl;
                 std::cout << std::endl;
-
-                // maximum clique approximation
-                NodeSet maxClique = inputGraph.findMaxCliqueApprox();
-                std::cout << "approx Max clique set: " << maxClique << std::endl;
-                std::cout << "approx Max clique size : " << maxClique.size() << std::endl;
-
             } catch (std::exception& e) {
                 std::cout << "Terminated due to exception: ";
                 std::cerr << e.what() << std::endl;

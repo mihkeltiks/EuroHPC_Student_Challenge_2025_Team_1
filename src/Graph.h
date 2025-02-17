@@ -13,6 +13,7 @@
 #include <utility>
 #include <bitset>
 #include <map>
+#include <numeric>
 #include "GraphLabels.h"
 
 template<class VectorT>
@@ -380,6 +381,18 @@ public:
         }        
     }
     
+    void sortVerticesByDegree() {
+        size_t n = degrees.size();
+        std::vector<int> order(n);
+
+        std::iota(order.begin(), order.end(), 0);
+        std::sort(order.begin(), order.end(), [&](size_t a, size_t b) {
+            return degrees[a] > degrees[b];
+        });
+
+        orderVertices(order);
+    }
+    
     /**
      * @brief Reorder the vertices back to the original order.
      */
@@ -473,7 +486,92 @@ public:
 
         return a;
     }
+
+        void removeVerticesWithLowDegree(int n) {
+        size_t originalNumVertices = getNumVertices();
+        std::vector<bool> verticesToRemove(originalNumVertices, false);
+        int numRemoved = 0;
+
+        // Mark vertices for removal
+        for (size_t i = 0; i < originalNumVertices; ++i) {
+            if (degrees[i] < n) {
+                verticesToRemove[i] = true;
+                numRemoved++;
+            }
+        }
+
+        if (numRemoved == 0) return;
+
+        std::vector<VectorT> newAdjacencyMatrix;
+        std::vector<VectorT> newInvAdjacencyMatrix;
+        std::vector<int> newDegrees;
+        std::vector<VertexId> newMapping;
+        GraphLabels<VertexId> newLabels;
+        
+
+        newAdjacencyMatrix.reserve(originalNumVertices - numRemoved);
+        newInvAdjacencyMatrix.reserve(originalNumVertices - numRemoved);
+        newDegrees.reserve(originalNumVertices - numRemoved);
+        newMapping.reserve(originalNumVertices - numRemoved);
+        if (labels.vertexLabels.size() == originalNumVertices)
+            newLabels.vertexLabels.reserve(originalNumVertices - numRemoved);
+        if (labels.edgeLabels.size() == originalNumVertices)
+            newLabels.edgeLabels.resize(originalNumVertices - numRemoved);
+
+
+        std::vector<size_t> oldToNewIndex(originalNumVertices, -1);
+
+        size_t newIndex = 0;
+        for (size_t i = 0; i < originalNumVertices; ++i) {
+            if (!verticesToRemove[i]) {
+                oldToNewIndex[i] = newIndex++;
+                newDegrees.push_back(degrees[i]);
+                newMapping.push_back(mapping.empty() ? i : mapping[i]);
+                if (labels.vertexLabels.size() == originalNumVertices)
+                    newLabels.vertexLabels.push_back(labels.vertexLabels[i]);
+
+                newAdjacencyMatrix.emplace_back();
+                newInvAdjacencyMatrix.emplace_back();
+            }
+        }
+
+        for (size_t i = 0; i < newIndex; ++i) {
+            newAdjacencyMatrix[i].resize(newIndex, false);
+            newInvAdjacencyMatrix[i].resize(newIndex, false);
+            for (size_t j = 0; j < newIndex; ++j) {
+                newAdjacencyMatrix[i][j] = adjacencyMatrix[getOldIndex(i, oldToNewIndex)][getOldIndex(j, oldToNewIndex)];
+                newInvAdjacencyMatrix[i][j] = invAdjacencyMatrix[getOldIndex(i, oldToNewIndex)][getOldIndex(j, oldToNewIndex)];
+            }
+        }
+
+        if (labels.edgeLabels.size() == originalNumVertices) {
+            for (size_t i = 0; i < newIndex; ++i) {
+                newLabels.edgeLabels[i].resize(newIndex);
+                for (size_t j = 0; j < newIndex; ++j) {
+                     newLabels.edgeLabels[i][j] = labels.edgeLabels[getOldIndex(i, oldToNewIndex)][getOldIndex(j, oldToNewIndex)];
+                }
+            }
+        }
+
+
+        adjacencyMatrix = std::move(newAdjacencyMatrix);
+        invAdjacencyMatrix = std::move(newInvAdjacencyMatrix);
+        degrees = std::move(newDegrees);
+        mapping = std::move(newMapping);
+        labels = std::move(newLabels);
+    }
+
+    size_t getOldIndex(size_t newIndex, const std::vector<size_t>& oldToNewIndex) const {
+        for (size_t i = 0; i < oldToNewIndex.size(); ++i) {
+            if (oldToNewIndex[i] == newIndex) {
+                return i;
+            }
+        }
+        return -1;
+    }
 };
+
+
 
 
 /**
@@ -482,7 +580,6 @@ public:
  * @param v     The input vertices, possibly a clique
  * @return      true if #v is a clique within #g
  * 
- * TODO: this function is not appropriate (read: it does not work) for vector sets
  */
 template<class G, class S>
 bool isClique(const G& graph, const S& v) {
