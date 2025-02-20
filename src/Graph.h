@@ -392,6 +392,10 @@ public:
 
         orderVertices(order);
     }
+
+    int getDegree(int vertex) {
+        return degrees[vertex];
+    }
     
     /**
      * @brief Reorder the vertices back to the original order.
@@ -487,11 +491,10 @@ public:
         return a;
     }
 
-        void removeVerticesWithLowDegree(int n) {
+    void removeVerticesWithLowDegree(int n, std::vector<int> maxClique) {
         size_t originalNumVertices = getNumVertices();
         std::vector<bool> verticesToRemove(originalNumVertices, false);
         int numRemoved = 0;
-
         // Mark vertices for removal
         for (size_t i = 0; i < originalNumVertices; ++i) {
             if (degrees[i] < n) {
@@ -501,6 +504,16 @@ public:
         }
 
         if (numRemoved == 0) return;
+
+        std::vector<int> filteredVertices = filterVertices(maxClique);
+
+        for (size_t i = 0; i < filteredVertices.size(); ++i) {
+            if (!verticesToRemove[i]){
+                verticesToRemove[i] = true;
+                numRemoved++;
+            }
+        }
+
 
         std::vector<VectorT> newAdjacencyMatrix;
         std::vector<VectorT> newInvAdjacencyMatrix;
@@ -513,10 +526,6 @@ public:
         newInvAdjacencyMatrix.reserve(originalNumVertices - numRemoved);
         newDegrees.reserve(originalNumVertices - numRemoved);
         newMapping.reserve(originalNumVertices - numRemoved);
-        if (labels.vertexLabels.size() == originalNumVertices)
-            newLabels.vertexLabels.reserve(originalNumVertices - numRemoved);
-        if (labels.edgeLabels.size() == originalNumVertices)
-            newLabels.edgeLabels.resize(originalNumVertices - numRemoved);
 
 
         std::vector<size_t> oldToNewIndex(originalNumVertices, -1);
@@ -535,6 +544,8 @@ public:
             }
         }
 
+
+
         for (size_t i = 0; i < newIndex; ++i) {
             newAdjacencyMatrix[i].resize(newIndex, false);
             newInvAdjacencyMatrix[i].resize(newIndex, false);
@@ -544,21 +555,13 @@ public:
             }
         }
 
-        if (labels.edgeLabels.size() == originalNumVertices) {
-            for (size_t i = 0; i < newIndex; ++i) {
-                newLabels.edgeLabels[i].resize(newIndex);
-                for (size_t j = 0; j < newIndex; ++j) {
-                     newLabels.edgeLabels[i][j] = labels.edgeLabels[getOldIndex(i, oldToNewIndex)][getOldIndex(j, oldToNewIndex)];
-                }
-            }
-        }
-
-
         adjacencyMatrix = std::move(newAdjacencyMatrix);
         invAdjacencyMatrix = std::move(newInvAdjacencyMatrix);
         degrees = std::move(newDegrees);
         mapping = std::move(newMapping);
         labels = std::move(newLabels);
+
+        debugOut();
     }
 
     size_t getOldIndex(size_t newIndex, const std::vector<size_t>& oldToNewIndex) const {
@@ -569,40 +572,42 @@ public:
         }
         return -1;
     }
-};
 
-
-
-
-/**
- * @brief Function which tests weather the given set of vertices #v is a clique on the graph #g
- * @param graph The input graph 
- * @param v     The input vertices, possibly a clique
- * @return      true if #v is a clique within #g
- * 
- */
-template<class G, class S>
-bool isClique(const G& graph, const S& v) {
-    static const bool debugOutput = false;
-    if (debugOutput) std::cout << "testing vertex set " << v <<"\n";
-    size_t n = graph.degrees.size();
-    int connectionsChecked = 0;
-    for (size_t i = 0; i < n; ++i) {
-        if (!v.contains(i))
-            continue;
-        for (size_t j = i+1; j < n; ++j) {
-            if (!v.contains(j))
-                continue;
-            if (!graph.adjacencyMatrix[i][j]) {
-                if (debugOutput) std::cout << i << " and " << j << " are not connected\n";
-                return false;
-            } else 
-                ++connectionsChecked;
+    std::vector<int> filterVertices(const std::vector<int>& cliqueVertices) {
+        std::vector<bool> isInClique(getNumVertices(), false);
+        for (int v : cliqueVertices) {
+            isInClique[v] = true;
         }
+
+        std::vector<int> removedVertices;
+
+        for (int v = 0; v < getNumVertices(); ++v) { // Go over vertices to eliminate
+            bool hasValidNeighbor = false;
+            if (isInClique[v]) continue;
+            
+            for (int cliqueV = 0; cliqueV < cliqueVertices.size(); cliqueV++) { // Go over vertices in clique
+                if (areNeighbours(v,cliqueV)){
+                    hasValidNeighbor = false;
+                    break;
+                }
+                for (int u = 0; u < getNumVertices(); u++) { // Try to find connecting vertex between them
+                    if (!isInClique[u] && areNeighbours(cliqueV,u) && areNeighbours(u,v)) {
+                        hasValidNeighbor = true;
+                        break;
+                    }
+                }
+                if (hasValidNeighbor) break;
+            }
+            if (hasValidNeighbor) {
+                removedVertices.push_back(v);
+            }
+        }
+
+        
+        return removedVertices;
     }
-    if (debugOutput) std::cout << connectionsChecked << " connections ok\n";
-    return true;
-}
+
+};
 
 
 #endif // GRAPH_H

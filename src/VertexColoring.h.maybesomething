@@ -1,0 +1,240 @@
+// #ifndef VERTEX_COLORING_H
+// #define VERTEX_COLORING_H
+
+// #include <vector>
+// #include <algorithm>
+// #include <limits>
+// #include <chrono>
+// #include "Graph.h"
+// #include <VectorSet.h>
+// #include <omp.h>
+
+// template<class VectorT>
+// class VertexColoring {
+// public:
+//     Graph<VectorT>& graph;
+//     std::vector<int> bestColoring;
+//     VectorT maxClique;
+
+//     VertexColoring(Graph<VectorT>& g);
+//     int findChromaticNumber();
+//     bool isProperlyColored(const std::vector<int>& coloring);
+
+// private:
+//     int globalLowerBound;
+//     int globalUpperBound;
+//     int debugOut = 1;
+
+//     int greedyColoring(std::vector<int>);
+//     std::vector<int> findMaxClique();
+//     void branchAndBound(std::vector<int>& currentColoring, int vertex, int maxColor, int numVertices);
+//     bool isSafe(const std::vector<int>& coloring, int vertex, int color);
+//     int calculateUpperBound(const std::vector<int>& partialColoring);
+// };
+
+// template <class VectorT>
+// VertexColoring<VectorT>::VertexColoring(Graph<VectorT>& g) : graph(g) {}
+
+// template <class VectorT>
+// int VertexColoring<VectorT>::findChromaticNumber() {
+//     int numVertices = graph.getNumVertices();
+//     bestColoring.assign(numVertices, -1);
+    
+
+//     // std::vector<int> maxClique = findMaxClique();
+//     graph.sortVerticesByDegree();
+//     graph.removeVerticesWithLowDegree(2); // Can this be max-clique - 2 or something I wonder? rn just removes isolated vertices
+//     maxClique = graph.findMaxCliqueApprox();
+//     std::cout << "approx Max clique set: " << maxClique << std::endl;
+//     std::cout << "approx Max clique size : " << maxClique.size() << std::endl;
+
+//     std::vector<int> currentColoring(numVertices, -1);
+//     for (int i = 0; i < maxClique.size(); ++i) {
+//         currentColoring[maxClique[i]] = i;
+//     }
+
+//     globalLowerBound = maxClique.size();
+//     globalUpperBound = greedyColoring(currentColoring);
+    
+//     if (globalUpperBound == globalLowerBound){
+//         std::cout << "Upper and lower bound are the same: " << globalLowerBound << "\n";
+//         return globalLowerBound;
+//     }
+//     if (debugOut){
+//         std::cout << "Lower bound: "<< globalLowerBound << "\n";
+//         std::cout << "Upper bound: "<< globalUpperBound << "\n";
+//     }
+    
+//     auto start = std::chrono::high_resolution_clock::now();
+    
+
+//     #pragma omp parallel
+//     {
+//         #pragma omp single nowait
+//         {
+//             branchAndBound(currentColoring, 0, 0, numVertices);
+//         }
+//     }
+
+//     std::cout << "Final chromatic number: " << globalUpperBound << "\n";
+//     auto stop = std::chrono::high_resolution_clock::now();
+//     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+//     std::cout << "BB duration: " << duration.count() << "ms\n";
+
+//     return globalUpperBound;
+// }
+
+
+//     // Branch-and-Bound function
+//     template <class VectorT>
+//     void VertexColoring<VectorT>::branchAndBound(std::vector<int>& currentColoring, int vertex, int maxColor, int numVertices) {
+//         if (vertex == numVertices) {
+//             int colorsUsed = maxColor;
+//             #pragma omp critical
+//             {
+//                 if (colorsUsed < globalUpperBound) {
+//                     std::cout << "New best coloring found using " << colorsUsed << " colors\n";
+//                     globalUpperBound = colorsUsed;
+//                     bestColoring = currentColoring;
+//                 }
+//             }
+//             return;
+//         }
+
+//         int localLowerBound = std::max(globalLowerBound, maxColor);
+//         if (localLowerBound >= globalUpperBound) {
+//             return; // Prune search space
+//         }
+
+//         // Find two non-adjacent vertices for branching
+//         int u = -1, v = -1;
+//         for (int i = 0; i < numVertices; i++) {
+//             for (int j = i + 1; j < numVertices; j++) {
+//                 if (!graph.areNeighbours(i, j)) {
+//                     u = i;
+//                     v = j;
+//                     break;
+//                 }
+//             }
+//             if (u != -1) break;
+//         }
+
+//         if (u == -1 || v == -1) return; // No valid branching found
+
+//         #pragma omp parallel
+//         {
+//             #pragma omp single nowait
+//             {
+//                 // Branch 1: Assume u and v are assigned the same color
+//                 #pragma omp task firstprivate(currentColoring, vertex, maxColor)
+//                 {
+//                     currentColoring[u] = currentColoring[v] = maxColor;
+//                     branchAndBound(currentColoring, vertex + 1, maxColor, numVertices);
+//                     currentColoring[u] = currentColoring[v] = -1;
+//                 }
+
+//                 // Branch 2: Assume u and v are assigned different colors
+//                 #pragma omp task firstprivate(currentColoring, vertex, maxColor)
+//                 {
+//                     currentColoring[u] = maxColor;
+//                     currentColoring[v] = maxColor + 1;
+//                     branchAndBound(currentColoring, vertex + 1, maxColor + 1, numVertices);
+//                     currentColoring[u] = currentColoring[v] = -1;
+//                 }
+//             }
+//         }
+//     }
+
+//     // Function to initialize the search
+    
+
+
+// template <class VectorT>
+// bool VertexColoring<VectorT>::isSafe(const std::vector<int>& coloring, int vertex, int color) {
+//     for (int i = 0; i < maxClique.size(); ++i) { //loop over assigned vertices
+//         if (coloring[maxClique[i]] == color && graph.areNeighbours(vertex, maxClique[i])) {
+//             return false;
+//         }
+//     }
+//     for (int i = 0; i < vertex; ++i) { //loop over assigned vertices
+//         if (coloring[i] == color && graph.areNeighbours(vertex, i)) {
+//             return false;
+//         }
+//     }
+//     return true;
+// }
+
+// template <class VectorT>
+// int VertexColoring<VectorT>::greedyColoring(std::vector<int> inputColors) {
+//     auto start = std::chrono::high_resolution_clock::now();
+
+//     std::vector<int> colors = inputColors;
+//     int numVertices = graph.getNumVertices();
+//     std::vector<bool> availableColors(numVertices, true);
+//     int maxUsedColor = 0;
+
+//     for (int v = 0; v < numVertices; ++v) {
+//         if (colors[v] == -1){
+//             for (int i = 0; i < numVertices; ++i) {
+//                 if (graph.areNeighbours(v, i) && colors[i] != -1) {
+//                     availableColors[colors[i]] = false;
+//                 }
+//             }
+
+//             int color;
+//             for (color = 0; color < numVertices; ++color) {
+//                 if (availableColors[color]) break;
+//             }
+//             // std::cout << v << " gets color " << color << "\n";
+//             colors[v] = color;
+//         }
+//         maxUsedColor = std::max(maxUsedColor, colors[v]);
+//         std::fill(availableColors.begin(), availableColors.end(), true);
+//     }
+//     isProperlyColored(colors);
+//     bestColoring = colors;
+//     auto stop = std::chrono::high_resolution_clock::now();
+//     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+//     std::cout << "Upper bound duration: " << duration.count() << "ms\n";
+//     return maxUsedColor+1;
+// }
+
+
+
+// template <class VectorT>
+// bool VertexColoring<VectorT>::isProperlyColored(const std::vector<int>& coloring) {
+//     // int numVertices = graph.getNumVertices();
+    
+//     // std::cout << "Coloring: ";
+//     // for (int i = 0; i < coloring.size(); i++){
+//     //     std::cout << coloring[i] << ", ";
+//     // }
+//     // std::cout << "\n";
+        
+//     // if (coloring.size() != numVertices) {
+//     //     std::cout << "ERR: Coloring size is not the same as the number of vertices of the graph \n";
+//     //     return false;
+//     // }
+    
+//     if (std::find(coloring.begin()+1, coloring.end(), -1) != coloring.end()) {
+//         std::cout << "ERR: Found uncolored vertex \n";
+//         return false;
+//     }
+    
+//     // Check if adjacent vertices have different colors
+//     for (int v = 0; v < coloring.size(); ++v) {
+//         for (int u = v + 1; u < coloring.size(); ++u) {
+//             if (graph.areNeighbours(v, u) && coloring[v] == coloring[u]) {
+//                 std::cout << "ERR: Vertices " << v << " and " << u << " are colored the same\n";
+//                 return false;
+//             }
+//         }
+//     }
+    
+//     return true;
+// }
+
+
+
+
+// #endif // VERTEX_COLORING_H

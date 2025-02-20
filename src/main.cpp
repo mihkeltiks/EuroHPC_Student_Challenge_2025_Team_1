@@ -107,9 +107,12 @@ int main(int argc, char** argv) {
                     std::cout << "Inverted graph: " << inputGraph.getNumVertices() << " vertices " << inputGraph.getNumEdges() << " edges " 
                     << getDensity(inputGraph.getNumVertices(), inputGraph.getNumEdges()) << " density " << std::endl;
                 }
+
+                inputGraph.debugOut();
                 VertexColoring<NodeSet> coloring(inputGraph);
                 int numColors = coloring.findChromaticNumber();
                 bool check = coloring.isProperlyColored(coloring.bestColoring);
+                // inputGraph.debugOut();
                 std::cout << "Minimum number of colors: " << numColors << std::endl;
                 std::cout << std::endl;
             } catch (std::exception& e) {
