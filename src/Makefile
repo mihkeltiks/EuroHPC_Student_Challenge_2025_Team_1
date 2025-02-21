@@ -7,8 +7,8 @@ SRC_DIR ?= ./
 
 INC_DIRS ?= 
 LIB_DIRS ?= 
-CPP_FLAGS ?=  -march=native -std=c++0x -O3 -s
-CPP_LIBS ?= rt pthread
+CPP_FLAGS ?=  -march=native -std=c++0x -O3 -s -mtune=native -funroll-loops -ffast-math  -fomit-frame-pointer -fopenmp #-ftree-parallelize-loops=8
+CPP_LIBS ?= rt pthread gomp
 
 
 # this works for linux:

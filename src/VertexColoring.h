@@ -29,7 +29,7 @@ private:
 
     int greedyColoring(std::vector<int>);
     std::vector<int> findMaxClique();
-    void branchAndBound(std::vector<int> &currentColoring, int maxColor, int numVertices);
+    void branchAndBound(std::vector<int> &currentColoring, int maxColor);
     int chooseVertex(std::vector<int> &currentColoring);
     bool isSafe(const std::vector<int> &coloring, int vertex, int color);
     int countDistinctNeighborColors(int vertex, const std::vector<int> &currentColoring);
@@ -73,7 +73,7 @@ int VertexColoring<VectorT>::findChromaticNumber() {
     }
     auto start = std::chrono::high_resolution_clock::now();
 
-    branchAndBound(currentColoring, *std::max_element(currentColoring.begin(), currentColoring.end()) + 1, graph.getNumVertices());
+    branchAndBound(currentColoring, *std::max_element(currentColoring.begin(), currentColoring.end()) + 1);
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
     std::cout << "BB duration: " << duration.count() << "ms\n";
@@ -83,7 +83,7 @@ int VertexColoring<VectorT>::findChromaticNumber() {
 
 
     template <class VectorT>
-    void VertexColoring<VectorT>::branchAndBound(std::vector<int>& currentColoring, int maxColor, int numVertices) {
+    void VertexColoring<VectorT>::branchAndBound(std::vector<int>& currentColoring, int maxColor) {
         // std::cout << " Here \n";
         int localLowerBound = std::max(globalLowerBound, maxColor);
         if (localLowerBound >= globalUpperBound) {
@@ -107,10 +107,10 @@ int VertexColoring<VectorT>::findChromaticNumber() {
                     // std::cout << " Here 4  " << vertex <<  " " << color << "\n";
                     if (isSafe(currentColoring, vertex, color)) {
                         // std::cout << " Here 5\n";
-                        #pragma omp task firstprivate(currentColoring, color)
+                        #pragma omp task firstprivate(currentColoring, color, maxColor)
                         {
                             currentColoring[vertex] = color;
-                            branchAndBound(currentColoring, std::max(maxColor, color+1), numVertices);
+                            branchAndBound(currentColoring, std::max(maxColor, color+1));
                             currentColoring[vertex] = -1;
                         }
                     }
@@ -140,36 +140,6 @@ int VertexColoring<VectorT>::findChromaticNumber() {
         }
         return bestindex;
     }
-// template <class VectorT>
-// void VertexColoring<VectorT>::branchAndBound(std::vector<int>& currentColoring, int vertex, int maxColor, int numVertices) {
-//     if (vertex == numVertices) {
-//         int colorsUsed = maxColor;
-//         if (colorsUsed < globalUpperBound) {
-//             std::cout << "New coloring found using " << colorsUsed << "\n";
-//             globalUpperBound = colorsUsed;
-//             bestColoring = currentColoring;)
-//         }
-//         return;
-//     }
-
-//     int localLowerBound = std::max(globalLowerBound, maxColor);
-//     if (localLowerBound >= globalUpperBound) {
-//         return;
-//     }
-
-//     if (currentColoring[vertex] != -1) {
-//         branchAndBound(currentColoring, vertex + 1, maxColor, numVertices);
-//         return;
-//     }
-
-//     for (int color = 0; color < globalUpperBound; ++color) {
-//         if (isSafe(currentColoring, vertex, color)) {
-//             currentColoring[vertex] = color;
-//             branchAndBound(currentColoring, vertex + 1, std::max(maxColor, color+1), numVertices);
-//             currentColoring[vertex] = -1;
-//         }
-//     }
-// }
 
 
 template <class VectorT>

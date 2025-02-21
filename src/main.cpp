@@ -7,7 +7,7 @@
 #include "Graph.h"
 #include "VectorSet.h"
 #include <VertexColoring.h>
-
+#include <omp.h>
 /**
  * @brief Calculate graph density from the number of vertices @link #v and number of edges @link e
  * @param v number of vertices
