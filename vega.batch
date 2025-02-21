@@ -1,0 +1,16 @@
+#!/bin/bash
+#SBATCH --job-name=chromatic
+#SBATCH --partition=cpu
+#SBATCH --ntasks-per-node=1
+#SBATCH --nodes=1
+#SBATCH --mem=220G
+#SBTACH --hint=nomultithread
+#SBATCH --cpus-per-task=128
+#SBATCH --output=my_job.out
+#SBATCH --time=00:01:00
+
+ml oneapi/compiler/latest
+CXX=icx make src/Makefile.intel
+
+export OMP_NUM_THREADS=128
+./src/chromatic -input instances/queen8_8.col

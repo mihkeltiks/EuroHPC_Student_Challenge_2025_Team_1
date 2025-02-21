@@ -1,0 +1,21 @@
+make: Nothing to be done for 'src/Makefile.intel'.
+warning: this algorithm does not use bitboards
+Loading graph instances/queen8_8.col
+  this is a Dimacs file with a graph of 64 vertices, 1456 edges, 0.722222 density
+DEBUG adjacency size = 65, 65
+DEBUG degrees = 65: 0 42 42 42 42 42 42 42 42 42 46 46 46 46 46 46 42 42 46 50 50 50 50 46 42 42 46 50 54 54 50 46 42 42 46 50 54 54 50 46 42 42 46 50 50 50 50 46 42 42 46 46 46 46 46 46 42 42 42 42 42 42 42 42 42 
+DEBUG mapping = 0: 
+
+approx Max clique set: [1,2,3,0]
+approx Max clique size : 4
+DEBUG adjacency size = 28, 28
+DEBUG degrees = 28: 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 63 
+DEBUG mapping = 28: 64 63 62 61 60 59 48 49 58 57 56 32 9 1 2 3 4 5 6 7 8 41 16 17 24 25 33 40 
+
+Upper bound duration: 0ms
+Lower bound: 4
+Upper bound: 9
+New coloring found using 8
+BB duration: 55ms
+Minimum number of colors: 8
+
