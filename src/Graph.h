@@ -217,57 +217,151 @@ public:
     }
 
     /**
-     * @brief Find an approximation of the maximum clique using a greedy approach
-     * @return VectorT containing the vertices that form an approximate maximum clique
+     * @brief Compute the k-core decomposition of the graph using Batagelj-Zaversnik algorithm
+     * @return Vector containing the core number for each vertex
      */
-    VectorT findMaxCliqueApprox() {
-        // compute degrees
-        calculateNodeDegrees();
-        
+    std::vector<int> computeCoreDecomposition() {
         size_t n = getNumVertices();
-        
-        // Create vertex-degree pairs for sorting (may be parallelizable)
-        std::vector<std::pair<VertexId, int>> vertexDegrees;
-        vertexDegrees.reserve(n);
-        for (VertexId i = 0; i < n; ++i) {
-            vertexDegrees.push_back({i, degrees[i]});
+        // Initialize degrees if not already calculated
+        if (degrees.empty()) {
+            calculateNodeDegrees();
         }
-        
-        // Sort vertices by degree in descending order
-        std::sort(vertexDegrees.begin(), vertexDegrees.end(),
-            [](const std::pair<VertexId, int>& a, const std::pair<VertexId, int>& b) { 
-                return a.second > b.second; 
-            });
 
-        // Initialize result vector with highest degree vertex
-        VectorT clique;
-        clique.add(vertexDegrees[0].first);
+        // Create a copy of degrees that we'll modify
+        std::vector<int> vertexDegrees = degrees;
+
+        // Core numbers for each vertex
+        std::vector<int> coreNumbers(n);
+
+        // Create array of vertices
+        std::vector<VertexId> vertices(n);
+        std::iota(vertices.begin(), vertices.end(), 0);
+
+        // Sort vertices by degree
+        std::vector<int> pos(n);
+        std::vector<VertexId> degBins(n + 1, 0);
+
+        // Count frequency of each degree
+        for (size_t v = 0; v < n; v++) {
+            degBins[vertexDegrees[v]]++;
+        }
+
         
-        // Batch processing of candidates (parallelizable)
-        const size_t batchSize = 128;
-        for (size_t i = 1; i < n; i += batchSize) {
-            size_t endIdx = std::min(i + batchSize, n);
-            
-            // Process a batch of candidates
-            for (size_t j = i; j < endIdx; ++j) {
-                VertexId candidate = vertexDegrees[j].first;
-                bool canAdd = true;
-                
-                // Check if candidate forms clique with all current members
-                size_t cliqueSize = clique.size();
-                for (size_t k = 0; k < cliqueSize; ++k) {
-                    if (!areNeighbours(candidate, clique[k])) {
-                        canAdd = false;
-                        break;
-                    }
-                }
-                
-                if (canAdd) {
-                    clique.add(candidate);
+        // Starting positions of vertices of each degree
+        int start = 0;
+        for (size_t d = 0; d <= n; d++) {
+            int num = degBins[d];
+            degBins[d] = start;
+            start += num;
+        }
+
+
+        // Sort vertices by degree in ascending order
+        for (size_t v = 0; v < n; v++) {
+            if (vertexDegrees[v] >= 0 && vertexDegrees[v] <= n) {
+                pos[v] = degBins[vertexDegrees[v]];
+                if (pos[v] >= 0 && pos[v] < n) {
+                    vertices[pos[v]] = v;
+                    degBins[vertexDegrees[v]]++;
                 }
             }
         }
 
+        // Restore starting positions
+        for (int d = n; d > 0; d--) {
+            degBins[d] = degBins[d-1];
+        }
+        degBins[0] = 0;
+
+        // Process vertices in ascending order of degrees
+        for (size_t i = 0; i < n; i++) {
+            VertexId v = vertices[i];
+            if (v >= n) continue; // Skip invalid vertices
+            coreNumbers[v] = vertexDegrees[v];
+            
+            // Update degrees of neighbors
+            for (size_t u = 0; u < n; u++) {
+                // Add bounds checking
+                if (u >= n || v >= n) continue;
+                
+                if (areNeighbours(v, u) && vertexDegrees[u] > vertexDegrees[v]) {
+                    // Get position of u in vertices array
+                    int du = vertexDegrees[u];
+                    int pu = pos[u];
+                    
+                    // Add bounds checking
+                    if (du >= (int)n || du < 0) continue;
+                    int pw = degBins[du];
+                    if (pw >= (int)n || pw < 0) continue;
+                    
+                    VertexId w = vertices[pw];
+                    if (w >= n) continue;
+                    
+                    if (u != w) {
+                        // Swap u and w
+                        if (pu < (int)n && pu >= 0 && pw < (int)n && pw >= 0) {
+                            pos[u] = pw;
+                            pos[w] = pu;
+                            vertices[pu] = w;
+                            vertices[pw] = u;
+                        }
+                    }
+                    
+                    degBins[du]++;
+                    vertexDegrees[u]--;
+                }
+            }
+        }
+        
+        return coreNumbers;
+    }
+
+    /**
+     * @brief Find an approximation of the maximum clique using core decomposition
+     * @return VectorT containing the vertices that form an approximate maximum clique
+     */
+    VectorT findMaxCliqueApprox() {
+        size_t n = getNumVertices();
+
+        // Step 1: Compute core decomposition
+        std::vector<int> coreNumbers = computeCoreDecomposition();
+        
+        // Step 2: Sort vertices by descending core number and degree (as tiebreaker)
+        std::vector<std::pair<std::pair<int, int>, VertexId>> sortedVertices;
+        sortedVertices.reserve(n);
+        for (size_t i = 0; i < n; i++) {
+            sortedVertices.push_back({{coreNumbers[i], degrees[i]}, i});
+        }
+
+        std::sort(sortedVertices.begin(), sortedVertices.end(),
+                 std::greater<std::pair<std::pair<int, int>, VertexId>>());
+
+        // Step 3: Build clique starting from highest core number vertex
+        VectorT clique;
+        
+        // Add first vertex (highest core number) to clique
+        VertexId firstVertex = sortedVertices[0].second;
+        clique.push_back(firstVertex);
+        
+        // Try to add each remaining vertex
+        for (size_t i = 1; i < n; i++) {
+            VertexId v = sortedVertices[i].second;
+            bool canAdd = true;
+            
+            // Check if v is connected to all vertices already in clique
+            for (const auto& u : clique) {
+                if (!areNeighbours(v, u)) {
+                    canAdd = false;
+                    break;
+                }
+            }
+            
+            if (canAdd) {
+                std::cout << "Adding vertex: " << v << " to clique" << std::endl;
+                clique.push_back(v);
+            }
+        }
+        
         return clique;
     }
     
