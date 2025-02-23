@@ -34,7 +34,7 @@ public:
     std::vector<std::vector<char>> getAdjacencyMatrix() const;
     std::vector<int> getDegrees() const { return degrees; }
     const std::string& getError() const { return error; }
-    bool verticesAreMappedFrom1based() const { return false; }
+    bool verticesAreMappedFrom1based() const { return true; }
 
 private:
     bool parseProblemLine(std::istringstream& ss, std::string& line);
@@ -95,9 +95,9 @@ bool DimacsLoader::parseProblemLine(std::istringstream& ss, std::string& line) {
         }
         size_t nEdges = 0;
         ss >> numVertices >> nEdges;
-        maxVertexIndex = numVertices + 1;
+        maxVertexIndex = numVertices;
         edges.reserve(nEdges);
-        degrees.resize(maxVertexIndex, 0);
+        degrees.resize(maxVertexIndex, 0);  // Resize to actual number of vertices
     }
     return true;
 }
@@ -111,9 +111,10 @@ bool DimacsLoader::parseSpecsLine(std::istringstream& ss, std::string& line) {
             errorFlag = true;
             return false;
         }
-        edges.emplace_back(v1, v2);
-        degrees[v1]++;
-        degrees[v2]++;
+        // Convert from 1-based to 0-based indexing
+        edges.emplace_back(v1 - 1, v2 - 1);
+        degrees[v1 - 1]++;
+        degrees[v2 - 1]++;
     }
     return true;
 }
