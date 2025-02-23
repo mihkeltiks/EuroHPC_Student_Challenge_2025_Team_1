@@ -344,20 +344,22 @@ public:
         clique.push_back(firstVertex);
         
         // Try to add each remaining vertex
-        for (size_t i = 1; i < n; i++) {
+        for (size_t i = 1; i < sortedVertices.size(); i++) {
             VertexId v = sortedVertices[i].second;
+            if (v >= getNumVertices()) continue;
+            
             bool canAdd = true;
             
             // Check if v is connected to all vertices already in clique
-            for (const auto& u : clique) {
-                if (!areNeighbours(v, u)) {
+            for (size_t j = 0; j < clique.size(); j++) {
+                VertexId u = clique[j];
+                if (u >= getNumVertices() || !areNeighbours(v, u)) {
                     canAdd = false;
                     break;
                 }
             }
             
             if (canAdd) {
-                std::cout << "Adding vertex: " << v << " to clique" << std::endl;
                 clique.push_back(v);
             }
         }

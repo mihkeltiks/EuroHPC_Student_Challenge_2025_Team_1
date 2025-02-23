@@ -113,7 +113,7 @@ int main(int argc, char** argv) {
                 int numColors = coloring.findChromaticNumber();
                 bool check = coloring.isProperlyColored(coloring.bestColoring);
                 // inputGraph.debugOut();
-                std::cout << "Minimum number of colors: " << numColors << std::endl;
+                std::cout << "Chromatic number: " << numColors << std::endl;
                 std::cout << std::endl;
             } catch (std::exception& e) {
                 std::cout << "Terminated due to exception: ";
