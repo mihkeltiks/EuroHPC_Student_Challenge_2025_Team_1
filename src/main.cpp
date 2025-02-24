@@ -8,6 +8,7 @@
 #include "VectorSet.h"
 #include <VertexColoring.h>
 #include <omp.h>
+#include <chrono>
 /**
  * @brief Calculate graph density from the number of vertices @link #v and number of edges @link e
  * @param v number of vertices
@@ -55,29 +56,31 @@ int main(int argc, char** argv) {
         bool debugMC;
         bool printHelp = false;
         long timeout = 1000;
-        std::string inputString;    // this is a dummy variable, reused by parsing function and will not hold any useful value after parsing commandline
+        std::string inputString;    
         std::vector<std::string> inputGraphParameters;
         std::vector<int> bindProcessors;
         int numThreads = 0, numJobs = 1;
         bool invertInputGraph = false;
+        bool debugBnB = true;  // New parameter for debugging Branch and Bound
         Graph<NodeSet> inputGraph;
 
-        std::cout << "warning: this algorithm does not use bitboards\n";
-        
+        std::cout << "Branch and Bound Algorithm for Graph Coloring\n";
 
-        parameterSet.addDefinition("-input", "Provides a graph input to the algorithm, in a form of a file (path is provided); supported file formatas are dimacs text, SIP, Arg, and .dat.")
+        parameterSet.addDefinition("-input", "Provides a graph input to the algorithm, in a form of a file (path is provided); supported file formats are dimacs text, SIP, Arg, and .dat.")
             .setNumberOfValues(1)
             .bindToVariable(inputString)
             .addOnChangeHandler([&inputGraphParameters](const std::string& val)->std::string {inputGraphParameters.push_back(val); return "";});
 
-        
+        parameterSet.addDefinition("-debug", "Enable debug output for Branch and Bound algorithm")
+            .setNumberOfValues(0)
+            .bindToVariable(debugBnB);
+
         // TODO add all missing definitions
                 
         // parse the parameters
         try {
             auto r = parameterSet.parse(argv+1, argc-1); 
             
-            // check if parameters were added at all
             if (printHelp || (argc == 0)) {
                 std::cerr << "This program should be provided the following arguments:\n";
                 std::cerr << parameterSet.generateHelpScreen();
@@ -108,20 +111,55 @@ int main(int argc, char** argv) {
                     << getDensity(inputGraph.getNumVertices(), inputGraph.getNumEdges()) << " density " << std::endl;
                 }
 
-                inputGraph.debugOut();
+                // Debug output for initial graph
+                std::cout << "\nInitial Graph Properties:" << std::endl;
+                std::cout << "Number of vertices: " << inputGraph.getNumVertices() << std::endl;
+                std::cout << "Number of edges: " << inputGraph.getNumEdges() << std::endl;
+                std::cout << "Density: " << getDensity(inputGraph.getNumVertices(), inputGraph.getNumEdges()) << std::endl;
+                
+                // if (debugBnB) {
+                //     std::cout << "\nInitial adjacency matrix:" << std::endl;
+                //     inputGraph.debugAdjacencyOut();
+                // }
+
+                // Create and run the vertex coloring algorithm
                 VertexColoring<NodeSet> coloring(inputGraph);
-                int numColors = coloring.findChromaticNumber();
+                
+                // Get initial bounds
+                auto initialClique = inputGraph.findMaxCliqueApprox();
+                std::cout << "\nInitial lower bound (max clique size): " << initialClique.size() << std::endl;
+                
+                // Start timing
+                auto start = std::chrono::high_resolution_clock::now();
+                
+                // Run the branch and bound algorithm
+                int chromaticNumber = coloring.findChromaticNumber();
+                
+                // End timing
+                auto end = std::chrono::high_resolution_clock::now();
+                auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+                // Output results
+                std::cout << "\nResults:" << std::endl;
+                std::cout << "Chromatic number: " << chromaticNumber << std::endl;
+                std::cout << "Computation time: " << duration.count() << " ms" << std::endl;
+                
+                // Verify the solution
                 bool check = coloring.isProperlyColored(coloring.bestColoring);
-                // inputGraph.debugOut();
-                std::cout << "Chromatic number: " << numColors << std::endl;
-                std::cout << std::endl;
+                std::cout << "Solution verification: " << (check ? "VALID" : "INVALID") << std::endl;
+
+                if (debugBnB) {
+                    std::cout << "\nFinal coloring:" << std::endl;
+                    for (size_t i = 0; i < coloring.bestColoring.size(); i++) {
+                        std::cout << "Vertex " << i << ": Color " << coloring.bestColoring[i] << std::endl;
+                    }
+                }
+
             } catch (std::exception& e) {
                 std::cout << "Terminated due to exception: ";
                 std::cerr << e.what() << std::endl;
             } catch (...) {
-                std::cerr << "Terminated due to ";
-                std::cerr << "unknown";
-                std::cerr << " exception: " << std::endl;
+                std::cerr << "Terminated due to unknown exception" << std::endl;
             }
         }
         else {
@@ -135,7 +173,7 @@ int main(int argc, char** argv) {
     } catch (const std::string& e) {
         std::cout << "Terminated due to exception: " << e << std::endl;
     } catch (...) {
-        std::cout << "Terminated due to unknown exception: " << std::endl;
+        std::cout << "Terminated due to unknown exception" << std::endl;
     }
     return 0;
 }

@@ -1,9 +1,9 @@
 #ifndef VSET_H
 #define VSET_H
 
-
-// #include "MaximumCliqueBase.h"
-
+#include <vector>
+#include <algorithm>
+#include <iostream>
 
 // Set of vertices is based on std::vector
 // used as VertexSetRepresentation in MaximumCliqueProblem
@@ -14,23 +14,35 @@ public:
     
     using std::vector<T>::resize;
     using std::vector<T>::reserve;
-    void add(const T& value) {this->push_back(value);}
-    T pop() {T temp=this->back(); this->pop_back(); return temp;}
+    
+    void add(const T& value) { 
+        this->push_back(value);
+    }
+    
+    T pop() { 
+        T temp = this->back(); 
+        this->pop_back(); 
+        return temp;
+    }
+    
     void remove(const T& value) {
-        if (this->back() == value) this->pop_back();
-        else {
-            auto temp = std::find(this->begin(), this->end(), value);
-            if (temp != this->end())
-                this->erase(temp);
+        if (!this->empty() && this->back() == value) {
+            this->pop_back();
+        } else {
+            auto it = std::find(this->begin(), this->end(), value);
+            if (it != this->end())
+                this->erase(it);
         }
     }
+    
     using std::vector<T>::size;
     using std::vector<T>::empty;
     using std::vector<T>::operator[];
     using std::vector<T>::clear;
     using std::vector<T>::back;
+    
     template<class AdjSet>
-    friend void intersectWithAdjecency (const VectorSet& v, const AdjSet& adj, VectorSet& result) {
+    friend void intersectWithAdjecency(const VectorSet& v, const AdjSet& adj, VectorSet& result) {
         auto n = v.size();
         result.reserve(n);
         for (size_t i = 0; i < n; ++i) {
@@ -43,15 +55,21 @@ public:
         return std::find(this->cbegin(), this->cend(), v) != this->cend();
     }
 
-    // only required for debugging
-    bool isIntersectionOf(const VectorSet& bigSet) {
-        size_t n = bigSet.size();
-        if (n < 1) return false;
-        --n;
-        for (size_t i = 0; i < size(); ++i) {
-            for (size_t j = 0; bigSet[j] != (*this)[i]; ++j) {
-                if (j == n) return false;
+    // Fixed version of isIntersectionOf:
+    // For every element in this set, check that it is present in bigSet.
+    bool isIntersectionOf(const VectorSet& bigSet) const {
+        // For each element in the current set
+        for (size_t i = 0; i < this->size(); ++i) {
+            bool found = false;
+            // Search for it in bigSet (safely iterating up to bigSet.size())
+            for (size_t j = 0; j < bigSet.size(); ++j) {
+                if (bigSet[j] == (*this)[i]) {
+                    found = true;
+                    break;
+                }
             }
+            if (!found)
+                return false;
         }
         return true;
     }
@@ -68,9 +86,9 @@ public:
 template<class T>
 void fillWithRange(VectorSet<T>& vec, int min, int max) {
     vec.clear();
-    vec.resize(max-min);
+    vec.resize(max - min);
     for (int i = min; i < max; i++) 
-        vec[i-min] = i;
+        vec[i - min] = i;
 }
 
 template<class Ostream, class T>
@@ -80,10 +98,10 @@ Ostream& operator<< (Ostream& out, const VectorSet<T>& vec) {
         for (size_t i = 1; i < vec.size(); ++i)
             out << "," << vec[i]; 
         out << "]";
-    } else 
+    } else {
         out << "[/]";
+    }
     return out;
 }
-
 
 #endif // VSET_H

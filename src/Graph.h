@@ -384,13 +384,13 @@ public:
      * @param q     2nd vertex
      * @return      true if #p and #q are neighbours, false otherwise
      */
-    bool areNeighbours(VertexId p, VertexId q) const {
-        return (adjacencyMatrix[p][q]);
-    }
+    // bool areNeighbours(VertexId p, VertexId q) const {
+    //     return (adjacencyMatrix[p][q]);
+    // }
 
-    void setNeighbours(VertexId p, VertexId q, bool neighbours) {
-        adjacencyMatrix[p][q] = neighbours;
-    }
+    // void setNeighbours(VertexId p, VertexId q, bool neighbours) {
+    //     adjacencyMatrix[p][q] = neighbours;
+    // }
     
     /**
      * @brief A function which tells weather the intersection between #p's neighbours and another set of vertices is empty or not
@@ -489,7 +489,7 @@ public:
         orderVertices(order);
     }
 
-    int getDegree(int vertex) {
+    int getDegree(int vertex) const {
         return degrees[vertex];
     }
     
@@ -701,6 +701,42 @@ public:
 
         
         return removedVertices;
+    }
+
+    // Add copy constructor
+    Graph(const Graph& other) {
+        adjacencyMatrix = other.adjacencyMatrix;
+        invAdjacencyMatrix = other.invAdjacencyMatrix;
+        degrees = other.degrees;
+        mapping = other.mapping;
+        labels = other.labels;
+        wasRemapedTo0based = other.wasRemapedTo0based;
+    }
+
+
+    int getMaxDegree() const {
+        return *std::max_element(degrees.begin(), degrees.end());
+    }
+
+    void setNeighbours(int v1, int v2, bool value) {
+        if (v1 >= 0 && v2 >= 0 && v1 < getNumVertices() && v2 < getNumVertices()) {
+            adjacencyMatrix[v1][v2] = value;
+            adjacencyMatrix[v2][v1] = value;
+            if (value) {
+                degrees[v1]++;
+                degrees[v2]++;
+            } else {
+                degrees[v1]--;
+                degrees[v2]--;
+            }
+        }
+    }
+
+    bool areNeighbours(int v1, int v2) const {
+        if (v1 >= 0 && v2 >= 0 && v1 < getNumVertices() && v2 < getNumVertices()) {
+            return adjacencyMatrix[v1][v2];
+        }
+        return false;
     }
 
 };
