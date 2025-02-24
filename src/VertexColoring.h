@@ -24,31 +24,19 @@ public:
 
     struct Node {
         Graph<VectorT> graph;
-        std::vector<std::vector<int>> mergedSets;
-        VectorT activeVertices;
+        std::vector<bool> isActive;
+        int numActiveVertices;
         int lowerBound;
         int upperBound;
         
         // Constructor
         explicit Node(const Graph<VectorT>& g) : 
             graph(g), 
-            mergedSets(g.getNumVertices()),
-            activeVertices() 
-        {
-        // Initialize mergedSets
-        for (int i = 0; i < g.getNumVertices(); i++) {
-            mergedSets[i] = {i};
-        }
-        
-        // Initialize activeVertices
-        activeVertices.clear();  // Ensure it's empty
-        activeVertices.reserve(g.getNumVertices());
-        for (int i = 0; i < g.getNumVertices(); i++) {
-            activeVertices.add(i);
-        }
-        lowerBound = 0;
-        upperBound = g.getNumVertices();
-    }
+            isActive(g.getNumVertices(), true),
+            numActiveVertices(g.getNumVertices()),
+            lowerBound(0),
+            upperBound(g.getNumVertices())
+        {}
 
         // Copy constructor
         Node(const Node& other) : 
@@ -73,7 +61,7 @@ public:
 
         // Helper methods
         void deactivateVertex(int v) {
-            if(v >= 0 && v < isActive.size() && isActive[v]) {
+            if(v >= 0 && v < (int)isActive.size() && isActive[v]) {
                 isActive[v] = false;
                 numActiveVertices--;
             }
@@ -82,7 +70,7 @@ public:
         std::vector<int> getActiveVertices() const {
             std::vector<int> active;
             active.reserve(numActiveVertices);
-            for(int i = 0; i < isActive.size(); i++) {
+            for(int i = 0; i < (int)isActive.size(); i++) {
                 if(isActive[i]) {
                     active.push_back(i);
                 }
